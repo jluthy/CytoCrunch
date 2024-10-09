@@ -1,0 +1,90 @@
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Main Class Definition (Base Class)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Define the main class "insideflow" with a constant sampleName and shared slots
+# Now it also contains a list of clustering, dimensionality reduction, and batch correction objects
+setClass("insideflow",
+         slots = list(
+           sampleName = "character",    # Constant sample name
+           inputCSV = "matrix",
+           parameterNames = "data.frame",
+           flowFrameFJ = "ANY",         # Could be flowFrame from flowCore package
+           clusteringList = "list",     # List of ClusteringClass objects
+           dimReductionList = "list",   # List of DimRedClass objects
+           batchCorrectionList = "list" # List of BatchCorrectionClass objects
+         )
+)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Subclass Definitions (Inheriting from insideflow)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# ClusteringClass inherits from insideflow and adds a unique runID and clustering-specific slots
+setClass("ClusteringClass",
+         contains = "insideflow",
+         slots = list(
+           runID = "character",        # Unique runID for each clustering object
+           method = "character",       # Clustering method used
+           result = "matrix"           # Resulting matrix from clustering
+         )
+)
+
+# DimRedClass inherits from insideflow and adds a unique runID and dimensionality reduction-specific slots
+setClass("DimRedClass",
+         contains = "insideflow",
+         slots = list(
+           runID = "character",        # Unique runID for each dimensional reduction object
+           method = "character",       # Dimensionality reduction method used
+           reducedData = "matrix"      # Resulting matrix from dimensionality reduction
+         )
+)
+
+# BatchCorrectionClass inherits from insideflow and adds a unique runID and batch correction-specific slots
+setClass("BatchCorrectionClass",
+         contains = "insideflow",
+         slots = list(
+           runID = "character",        # Unique runID for each batch correction object
+           method = "character",       # Batch correction method used
+           correctedData = "matrix"    # Resulting matrix from batch correction
+         )
+)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Example instantiation of the main insideflow object and task-specific components
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Create individual task-specific objects
+clusterObj1 <- new("ClusteringClass",
+                   sampleName = "Sample_ABC",
+                   inputCSV = matrix(NA, 100, 10),
+                   parameterNames = data.frame(parameters = LETTERS[1:10], stains = letters[1:10]),
+                   runID = "clusterRun1",
+                   method = "kmeans",
+                   result = matrix(NA, 10, 5)
+)
+
+clusterObj2 <- new("ClusteringClass",
+                   sampleName = "Sample_ABC",
+                   inputCSV = matrix(NA, 100, 10),
+                   parameterNames = data.frame(parameters = LETTERS[1:10], stains = letters[1:10]),
+                   runID = "clusterRun2",
+                   method = "hierarchical",
+                   result = matrix(NA, 10, 5)
+)
+
+# Instantiate the main insideflow object, now containing a list of ClusteringClass objects
+insideflowObj <- new("insideflow",
+                     sampleName = "Sample_ABC",
+                     inputCSV = matrix(NA, 100, 10),
+                     parameterNames = data.frame(parameters = LETTERS[1:10], stains = letters[1:10]),
+                     clusteringList = list(clusterObj1, clusterObj2),  # List of clustering objects
+                     dimReductionList = list(),   # Empty lists for now
+                     batchCorrectionList = list()
+)
+
+# Access the first clustering object
+insideflowObj@clusteringList[[1]]
+
+# Access the second clustering object
+insideflowObj@clusteringList[[2]]

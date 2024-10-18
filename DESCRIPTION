@@ -1,7 +1,7 @@
 Package: CytoCrunch
 Type: Package
 Title: A Package for Flow Cytometry Data Analysis
-Version: 0.1.0
+Version: 0.2.0
 Author: Joshua Luthy
 Maintainer: Joshua Luthy <jluthy123@gmail.com>
 Description: A package to handle flow cytometry data from FlowJo, including 
@@ -9,3 +9,7 @@ Description: A package to handle flow cytometry data from FlowJo, including
 License: MIT
 Encoding: UTF-8
 LazyData: true
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+RoxygenNote: 7.3.1

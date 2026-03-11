@@ -335,6 +335,84 @@ setMethod("plotEmbeddingWithClusters",
 
 
 #######################################################################
+##         Cluster Heatmap     ##
+#######################################################################
+#' @title Plot a cluster heatmap
+#' @description Creates a heatmap of median marker expression per cluster.
+#' Rows represent clusters and columns represent markers. The resulting
+#' heatmap is stored as a PlotClass object in the CytoCrunch object's plotList.
+#' @return Returns the CytoCrunch object with the heatmap appended to plotList
+#' @param object A CytoCrunch object
+#' @param clusteringRunID The runID of the clustering to visualize
+#' @param markers Optional character vector of marker/stain names to include.
+#'   Defaults to all markers.
+#' @param scale Passed to pheatmap: "row" (default), "column", or "none"
+#' @param ... Additional arguments forwarded to pheatmap::pheatmap()
+#' @examples \dontrun{
+#' flowData <- plotClusterHeatmap(flowData, clusteringRunID = "SLK8")
+#' flowData <- plotClusterHeatmap(flowData, clusteringRunID = "SLK8",
+#'                                markers = c("CCR7", "CD45RA"), scale = "none")
+#' }
+#' @docType methods
+#' @importFrom pheatmap pheatmap
+#' @export
+setGeneric("plotClusterHeatmap", function(object, clusteringRunID, markers = NULL, scale = "row", ...) {
+  standardGeneric("plotClusterHeatmap")
+})
+#' @rdname plotClusterHeatmap
+setMethod("plotClusterHeatmap",
+          "CytoCrunch",
+          function(object, clusteringRunID, markers = NULL, scale = "row", ...) {
+
+            # Find the clustering corresponding to clusteringRunID
+            clusteringObj <- NULL
+            for (cluster in object@clusteringList) {
+              if (cluster@runID == clusteringRunID) {
+                clusteringObj <- cluster
+                break
+              }
+            }
+            if (is.null(clusteringObj)) {
+              stop("Clustering with the specified runID not found.")
+            }
+
+            # Get expression matrix and build marker labels
+            exprMat    <- object@inputCSV$X
+            stainNames <- object@parameterNames$fjStainNames
+            parNames   <- object@parameterNames$fjParNames
+            markerLabels <- ifelse(is.na(stainNames), parNames, stainNames)
+            colnames(exprMat) <- markerLabels
+
+            # Optionally subset to requested markers
+            if (!is.null(markers)) {
+              missing <- setdiff(markers, colnames(exprMat))
+              if (length(missing) > 0) {
+                stop(paste("Markers not found:", paste(missing, collapse = ", ")))
+              }
+              exprMat <- exprMat[, markers, drop = FALSE]
+            }
+
+            # Compute per-cluster median expression (rows = clusters, cols = markers)
+            clusters   <- clusteringObj@result$clusters
+            clusterIDs <- sort(unique(clusters))
+            clusterMedians <- do.call(rbind, lapply(clusterIDs, function(cl) {
+              apply(exprMat[clusters == cl, , drop = FALSE], 2, median)
+            }))
+            rownames(clusterMedians) <- paste0("Cluster_", clusterIDs)
+
+            # Create heatmap
+            p <- pheatmap::pheatmap(clusterMedians, scale = scale, ...)
+
+            # Store in PlotClass and append to plotList
+            plotObj <- createPlotClass(runID = clusteringRunID, plotType = "heatmap", plotObject = p)
+            object@plotList[[length(object@plotList) + 1]] <- plotObj
+
+            return(object)
+          }
+)
+
+
+#######################################################################
 ##         BASIC SLOT QUERIES     ##
 #######################################################################
 #' @title View the sample name

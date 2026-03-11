@@ -387,7 +387,11 @@ setMethod("plotClusterHeatmap",
             if (!is.null(markers)) {
               missing <- setdiff(markers, colnames(exprMat))
               if (length(missing) > 0) {
-                stop(paste("Markers not found:", paste(missing, collapse = ", ")))
+                available <- sort(colnames(exprMat)[!is.na(colnames(exprMat))])
+                stop(paste0(
+                  "Marker(s) not found: ", paste(missing, collapse = ", "), "\n",
+                  "Available markers: ", paste(available, collapse = ", ")
+                ))
               }
               exprMat <- exprMat[, markers, drop = FALSE]
             }

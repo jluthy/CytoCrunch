@@ -9,7 +9,9 @@ Description: A package to handle flow cytometry data from FlowJo, including
 License: MIT
 Encoding: UTF-8
 LazyData: true
-Suggests: 
+Imports:
+    pheatmap
+Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 RoxygenNote: 7.3.1

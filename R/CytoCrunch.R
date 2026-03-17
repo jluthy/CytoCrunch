@@ -417,6 +417,53 @@ setMethod("plotClusterHeatmap",
 
 
 #######################################################################
+##         Load Demo Data     ##
+#######################################################################
+#' @title Load built-in demo datasets
+#' @description Loads all four built-in demo datasets (Blood, LymphNode, Liver,
+#'   Spleen) from the package's \code{extdata} directory and returns them as a
+#'   named list of CytoCrunch objects. This is the recommended way to access the
+#'   bundled demo data for exploring CytoCrunch's analytical pipeline.
+#' @return A named list with four CytoCrunch objects:
+#'   \describe{
+#'     \item{blood}{3,000 cells from peripheral blood}
+#'     \item{lymphNode}{3,000 cells from lymph node}
+#'     \item{liver}{3,000 cells from liver}
+#'     \item{spleen}{3,000 cells from spleen}
+#'   }
+#' @examples
+#' demo      <- loadDemoData()
+#' blood     <- demo$blood
+#' lymphNode <- demo$lymphNode
+#' liver     <- demo$liver
+#' spleen    <- demo$spleen
+#' @export
+loadDemoData <- function() {
+  blood <- new("CytoCrunch",
+               sampleName       = "Blood3k",
+               inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+                                              package = "CytoCrunch"))
+
+  lymphNode <- new("CytoCrunch",
+                   sampleName       = "LymphNode3k",
+                   inputCSVFilePath = system.file("extdata", "LymphNode3k.ExtNode.csv",
+                                                  package = "CytoCrunch"))
+
+  liver <- new("CytoCrunch",
+               sampleName       = "Liver3k",
+               inputCSVFilePath = system.file("extdata", "Liver3k.ExtNode.csv",
+                                              package = "CytoCrunch"))
+
+  spleen <- new("CytoCrunch",
+                sampleName       = "Spleen3k",
+                inputCSVFilePath = system.file("extdata", "Spleen3k.ExtNode.csv",
+                                               package = "CytoCrunch"))
+
+  list(blood = blood, lymphNode = lymphNode, liver = liver, spleen = spleen)
+}
+
+
+#######################################################################
 ##         BASIC SLOT QUERIES     ##
 #######################################################################
 #' @title View the sample name

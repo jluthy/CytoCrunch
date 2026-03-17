@@ -694,6 +694,38 @@ cat("Total plots stored:", length(blood@plotList), "\n")
 
 ---
 
+## Cluster vs Rest Marker Comparison
+
+While heatmaps give a bird's-eye view of all clusters at once, it's often useful to **drill into a single cluster** and ask: *which markers distinguish this population from everything else?* The `plotClusterMarkerComparison()` function answers this by generating a panel of boxplots or violin plots — one per marker — comparing the selected cluster's expression against all other cells ("Rest").
+
+Crucially, the panels are **sorted by the magnitude of difference** (absolute median difference), so the markers that best define the focal cluster appear first.
+
+### Blood — Cluster 1 Boxplots (All Markers)
+
+```{r cluster-comparison-boxplot, fig.height=10, fig.width=12}
+blood <- plotClusterMarkerComparison(blood,
+                                     clusteringRunID = "BLOOD_C12",
+                                     clusterID       = 1)
+```
+
+### Blood — Cluster 5 Violin Plots (Selected Immune Markers)
+
+```{r cluster-comparison-violin, fig.height=7, fig.width=10}
+blood <- plotClusterMarkerComparison(blood,
+                                     clusteringRunID = "BLOOD_C12",
+                                     clusterID       = 5,
+                                     plotType        = "violin",
+                                     markers         = c("CD45", "HLA-DR", "CD16", "CD8a",
+                                                         "CD4", "CD3", "CD19", "CD56",
+                                                         "CD127", "CD95", "NKG2D"))
+```
+
+<div class="callout-note">
+<strong>Interpreting the Sort Order</strong> — Markers appearing in the top-left panels show the greatest expression difference between the focal cluster and all other cells. This makes it easy to quickly identify the phenotypic signature of any cluster without scanning through every marker manually.
+</div>
+
+---
+
 ## Merged Multi-Tissue Analysis
 
 One of CytoCrunch's key capabilities is **merging multiple CytoCrunch objects** for cross-tissue comparison. The `mergeCytoCrunchObjects()` function concatenates expression data, embeddings, and cluster assignments while preserving sample provenance.

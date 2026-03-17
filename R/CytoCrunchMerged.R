@@ -197,8 +197,7 @@ setMethod("plotMergedEmbeddings",
               p <- ggplot(plotData, aes(x = X, y = Y, color = cluster)) +
                 geom_point(alpha = 0.6) +
                 labs(title = paste(toupper(methodLabel), "Embedding for Run ID:", runID),
-                     color = "Cluster") +
-                theme_minimal()
+                     color = "Cluster")
 
               # Store each plot
               plotList[[i]] <- p

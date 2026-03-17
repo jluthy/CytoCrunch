@@ -5,9 +5,8 @@ author: "Jason Luthy"
 date: "`r Sys.Date()`"
 output:
   html_document:
-    theme: null
-    highlight: null
-    css: null
+    theme: flatly
+    highlight: tango
     self_contained: true
     toc: true
     toc_float:
@@ -448,7 +447,7 @@ This notebook demonstrates the core analytical pipeline:
 ## Load CytoCrunch and Dependencies
 
 ```{r load-packages}
-library(CytoCrunch)
+devtools::load_all(here::here())
 library(ggplot2)
 library(gridExtra)
 ```

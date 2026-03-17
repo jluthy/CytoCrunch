@@ -272,7 +272,7 @@ setMethod("performEmbedding",
 #' @param clusteringRunID The runID of the clustering to overlay
 #' @examples \dontrun{ plotEmbeddingWithClusters(object, embeddingRunID = "SLK9", clusteringRunID = "SLK8")}
 #' @docType methods
-#' @importFrom ggplot2 ggplot geom_point theme_minimal ggtitle labs scale_color_discrete
+#' @importFrom ggplot2 ggplot geom_point ggtitle labs scale_color_discrete
 #' @export
 #' @aliases plotEmbeddingWithClusters
 #' @format A ggplot2 object
@@ -324,7 +324,6 @@ setMethod("plotEmbeddingWithClusters",
             library(ggplot2)
             p <- ggplot(plotDF, aes(x = X, y = Y, color = cluster)) +
               geom_point(alpha = 0.7) +
-              theme_minimal() +
               ggtitle(paste("Embedding (", embeddingRunID, ") with Clusters (", clusteringRunID, ")", sep = "")) +
               labs(x = "Dim 1", y = "Dim 2") +
               scale_color_discrete(name = "Cluster")

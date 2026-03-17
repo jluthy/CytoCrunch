@@ -41,6 +41,14 @@ plotObj <- plotEmbeddingWithClusters(flowData, embeddingRunID = "SLK8", clusteri
 
 ```
 
+## Demo
+
+A full walkthrough of the CytoCrunch analytical pipeline — data loading, FlowSOM clustering, t-SNE/UMAP embedding, and visualization — is available as a rendered report:
+
+**[View the CytoCrunch Demo Report](https://htmlpreview.github.io/?https://github.com/jluthy/CytoCrunch/blob/main/reports/CytoCrunch_Demo.html)**
+
+The source notebook lives in [`notebooks/CytoCrunch_Demo.Rmd`](notebooks/CytoCrunch_Demo.Rmd). Knitting it from RStudio will automatically write the HTML output to the `reports/` folder.
+
 ## Contributing
 Improvements and new features will be added on a regular basis, please post on
 the [github page](https://github.com/jluthy/CytoCrunch) with any questions or if

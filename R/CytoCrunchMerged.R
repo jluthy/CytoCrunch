@@ -171,6 +171,9 @@ setMethod("plotMergedEmbeddings",
           signature(mergedObject = "CytoCrunchMerged"),
           function(mergedObject) {
 
+            .requireSuggested("ggplot2", "plotting")
+            .requireSuggested("gridExtra", "arranging merged plots")
+
             # Check if there are embeddings to plot
             if (length(mergedObject@mergedEmbeddings) < 1) {
               stop("No embeddings available to plot.")
@@ -194,9 +197,10 @@ setMethod("plotMergedEmbeddings",
               )
 
               # Generate the plot
-              p <- ggplot(plotData, aes(x = X, y = Y, color = cluster)) +
-                geom_point(alpha = 0.6) +
-                labs(title = paste(toupper(methodLabel), "Embedding for Run ID:", runID),
+              X <- Y <- cluster <- NULL  # column names used by aes()
+              p <- ggplot2::ggplot(plotData, ggplot2::aes(x = X, y = Y, color = cluster)) +
+                ggplot2::geom_point(alpha = 0.6) +
+                ggplot2::labs(title = paste(toupper(methodLabel), "Embedding for Run ID:", runID),
                      color = "Cluster")
 
               # Store each plot

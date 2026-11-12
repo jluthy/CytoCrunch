@@ -15,16 +15,22 @@ loadFlowJoCSV(object, csvPath, eventNumber = "EventNumberDP")
 
 \item{csvPath}{The path to the exported csv file from FlowJo}
 
-\item{eventNumber}{The column name for event numbers or cell ids}
+\item{eventNumber}{The column name for FlowJo event numbers
+(default \code{"EventNumberDP"}). The SeqGeq \code{CellId} column is always
+handled as well.}
 }
 \value{
 Returns the newly created object
 }
 \description{
-Load data into CytoCrunch object
+Reads a CSV exported by a FlowJo or SeqGeq plugin process. The
+  identifier columns \code{EventNumberDP} (FlowJo) and \code{CellId} (SeqGeq)
+  are removed from the expression matrix when present and stored separately
+  as \code{inputCSV$eventNumbers} and \code{inputCSV$cellIds}. All remaining
+  columns must be numeric.
 }
 \examples{
-\dontrun{
-inputCSVpath <- "/Documents/ExtNode.csv"
-myobject <- loadFlowJoCSV(object, inputCSVpath, eventNumber = "EventNumberDP")}
+path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+myobject <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+dim(myobject@inputCSV$X)
 }

@@ -36,8 +36,6 @@
 #'              markers         = c("CD3", "CD4", "CD8a", "CD19", "CD56"))
 #' }
 #' @docType methods
-#' @importFrom ggplot2 ggplot aes geom_boxplot geom_violin facet_wrap labs
-#'   scale_fill_manual theme element_text
 #' @export
 setGeneric("plotClusterMarkerComparison",
            function(object, clusteringRunID, clusterID,
@@ -50,6 +48,8 @@ setMethod("plotClusterMarkerComparison",
           "CytoCrunch",
           function(object, clusteringRunID, clusterID,
                    plotType = "boxplot", markers = NULL, ncol = 4, ...) {
+
+            .requireSuggested("ggplot2", "plotting")
 
             # ── Validate plotType ──────────────────────────────────────────
             plotType <- match.arg(plotType, choices = c("boxplot", "violin"))
@@ -126,6 +126,7 @@ setMethod("plotClusterMarkerComparison",
             longDF$marker <- factor(longDF$marker, levels = markerOrder)
 
             # ── Build ggplot ───────────────────────────────────────────────
+            group <- marker <- expression <- NULL  # column names used by aes()/facet_wrap()
             p <- ggplot2::ggplot(longDF,
                                  ggplot2::aes(x = group,
                                               y = expression,
@@ -146,7 +147,7 @@ setMethod("plotClusterMarkerComparison",
             p <- p +
               ggplot2::facet_wrap(~ marker, scales = "free_y", ncol = ncol) +
               ggplot2::scale_fill_manual(
-                values = c(setNames("#00d4ff", paste0("Cluster ", clusterID)),
+                values = c(stats::setNames("#00d4ff", paste0("Cluster ", clusterID)),
                            c("Rest" = "#3a5a70"))
               ) +
               ggplot2::labs(

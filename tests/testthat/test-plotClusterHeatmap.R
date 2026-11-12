@@ -1,4 +1,6 @@
 test_that("plotClusterHeatmap stores a heatmap PlotClass in plotList", {
+  skip_if_not_installed("FlowSOM")
+  skip_if_not_installed("pheatmap")
   csv_path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
   flowData <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = csv_path)
   flowData <- performClustering(flowData, runID = "SLK8", method = "FlowSOM", k = 8)
@@ -12,6 +14,8 @@ test_that("plotClusterHeatmap stores a heatmap PlotClass in plotList", {
 })
 
 test_that("plotClusterHeatmap errors on invalid clusteringRunID", {
+  skip_if_not_installed("FlowSOM")
+  skip_if_not_installed("pheatmap")
   csv_path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
   flowData <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = csv_path)
   flowData <- performClustering(flowData, runID = "SLK8", method = "FlowSOM", k = 8)

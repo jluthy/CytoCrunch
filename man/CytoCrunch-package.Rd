@@ -3,9 +3,17 @@
 \docType{package}
 \name{CytoCrunch-package}
 \alias{CytoCrunch-package}
-\title{CytoCrunch: A Package for Flow Cytometry Data Analysis}
+\title{CytoCrunch: Flow Cytometry Analysis of 'FlowJo' Plugin Exports}
 \description{
-A package to handle flow cytometry data from FlowJo, including clustering, dimensionality reduction, and batch correction.
+Loads expression data exported by 'FlowJo' v10 and 'SeqGeq' plugin processes into S4 objects. Provides clustering with self-organising maps ('EmbedSOM', or optionally 'FlowSOM'), dimensionality reduction with 'uwot' that keeps the fitted model so new data can be placed into an existing map, and plots of embeddings, cluster heatmaps and marker comparisons.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/jluthy/CytoCrunch}
+  \item Report bugs at \url{https://github.com/jluthy/CytoCrunch/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Joshua Luthy \email{jluthy123@gmail.com}

@@ -20,6 +20,7 @@ Returns the sampleName
 This function returns the sample name from the CytoCrunch object.
 }
 \examples{
-\dontrun{
-getSampleName(object)}
+path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+blood <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+getSampleName(blood)
 }

@@ -31,9 +31,14 @@ Rows represent clusters and columns represent markers. The resulting
 heatmap is stored as a PlotClass object in the CytoCrunch object's plotList.
 }
 \examples{
-\dontrun{
-flowData <- plotClusterHeatmap(flowData, clusteringRunID = "SLK8")
-flowData <- plotClusterHeatmap(flowData, clusteringRunID = "SLK8",
-                               markers = c("CCR7", "CD45RA"), scale = "none")
+\donttest{
+if (requireNamespace("EmbedSOM", quietly = TRUE) &&
+    requireNamespace("pheatmap", quietly = TRUE)) {
+  blood <- new("CytoCrunch", sampleName = "Blood3k",
+              inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+                                             package = "CytoCrunch"))
+  blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+  blood <- plotClusterHeatmap(blood, clusteringRunID = "C1")
+}
 }
 }

@@ -1,15 +1,19 @@
 Package: CytoCrunch
 Type: Package
-Title: A Package for Flow Cytometry Data Analysis
+Title: Flow Cytometry Analysis of 'FlowJo' Plugin Exports
 Version: 0.3.0
 Authors@R: person("Joshua", "Luthy", email = "jluthy123@gmail.com",
     role = c("aut", "cre"))
-Description: A package to handle flow cytometry data from FlowJo, including 
-    clustering, dimensionality reduction, and batch correction.
+Description: Loads expression data exported by 'FlowJo' v10 and 'SeqGeq'
+    plugin processes into S4 objects. Provides clustering with self-organising
+    maps ('EmbedSOM', or optionally 'FlowSOM'), dimensionality reduction with
+    'uwot' that keeps the fitted model so new data can be placed into an
+    existing map, and plots of embeddings, cluster heatmaps and marker
+    comparisons.
 License: MIT + file LICENSE
-Additional_repositories: https://bioconductor.org/packages/release/bioc
+URL: https://github.com/jluthy/CytoCrunch
+BugReports: https://github.com/jluthy/CytoCrunch/issues
 Encoding: UTF-8
-LazyData: true
 Imports:
     data.table,
     methods,

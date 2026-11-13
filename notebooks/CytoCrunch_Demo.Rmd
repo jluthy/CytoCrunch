@@ -432,7 +432,7 @@ cc_palette <- c(
 This notebook demonstrates the core analytical pipeline:
 
 1. **Data loading** — importing FlowJo-exported CSV data into CytoCrunch objects
-2. **Clustering** — FlowSOM-based automated cell population discovery
+2. **Clustering** — automated cell population discovery with FlowSOM, or with the dependency-light `SOM` method
 3. **Dimensionality reduction** — t-SNE and UMAP embeddings for visualization
 4. **Visualization** — publication-ready plots including embeddings, heatmaps, and merged multi-sample views
 
@@ -542,6 +542,24 @@ spleen <- performClustering(spleen,
                             method = "FlowSOM",
                             k      = 12)
 ```
+
+## SOM Clustering (No Bioconductor Required)
+
+FlowSOM is distributed through Bioconductor, which can be inconvenient to install. CytoCrunch therefore also offers `method = "SOM"`. It trains a self-organising map with **EmbedSOM** (available from CRAN), clusters the map's node codebook vectors with Ward hierarchical clustering into `k` groups, and gives each cell the label of its node. It needs only EmbedSOM, and accepts the same `k` and `runID` arguments as FlowSOM. Optional `xdim`, `ydim`, `rlen` and `seed` arguments control the map size, training length and reproducibility.
+
+Here we cluster the same Blood data again with `SOM`, under a separate `runID`, so the two methods can be compared side by side later on:
+
+```{r cluster-blood-som}
+blood <- performClustering(blood,
+                           runID  = "BLOOD_SOM12",
+                           method = "SOM",
+                           k      = 12,
+                           seed   = 1)
+```
+
+<div class="callout-note">
+<strong>FlowSOM vs SOM</strong> — The two methods build the same kind of self-organising map but differ in the metaclustering step (FlowSOM uses consensus clustering, `SOM` uses Ward hierarchical clustering), so cluster labels and boundaries will not be identical even for the same `k`. Use FlowSOM when you need results comparable to FlowJo's own FlowSOM plugin.
+</div>
 
 <div class="callout-note">
 <strong>Run IDs</strong> — Each clustering and embedding call is tagged with a `runID` string. This lets you store multiple analyses (different `k` values, methods, parameters) on the same object and reference them independently downstream.
@@ -723,6 +741,49 @@ blood <- plotClusterMarkerComparison(blood,
 <div class="callout-note">
 <strong>Interpreting the Sort Order</strong> — Markers appearing in the top-left panels show the greatest expression difference between the focal cluster and all other cells. This makes it easy to quickly identify the phenotypic signature of any cluster without scanning through every marker manually.
 </div>
+
+---
+
+## Comparing FlowSOM and SOM Clustering
+
+Because every result is stored under its own `runID`, we can overlay the `SOM` clusters on the Blood t-SNE embedding that was computed earlier. The embedding does not change; only the cluster labels do.
+
+```{r plot-blood-som-embed, fig.height=7}
+plotEmbeddingWithClusters(blood,
+                          embeddingRunID  = "BLOOD_C12",
+                          clusteringRunID = "BLOOD_SOM12")
+```
+
+The same heatmap used for FlowSOM works unchanged on the `SOM` clusters:
+
+```{r heatmap-som}
+blood <- plotClusterHeatmap(blood, clusteringRunID = "BLOOD_SOM12")
+```
+
+### How closely do the two methods agree?
+
+The cross-tabulation shows how the cells of each FlowSOM cluster (rows) are split across the `SOM` clusters (columns). The adjusted Rand index summarises the overall agreement: 1 means identical groupings and values near 0 mean no better than chance.
+
+```{r compare-methods}
+getClusters <- function(obj, runID) {
+  Filter(function(x) x@runID == runID, obj@clusteringList)[[1]]@result$clusters
+}
+flowsom <- getClusters(blood, "BLOOD_C12")
+som     <- getClusters(blood, "BLOOD_SOM12")
+
+table(FlowSOM = flowsom, SOM = som)
+
+adjustedRand <- function(a, b) {
+  tab <- table(a, b)
+  choose2 <- function(x) x * (x - 1) / 2
+  sumCells <- sum(choose2(tab))
+  sumRows  <- sum(choose2(rowSums(tab)))
+  sumCols  <- sum(choose2(colSums(tab)))
+  expected <- sumRows * sumCols / choose2(sum(tab))
+  (sumCells - expected) / ((sumRows + sumCols) / 2 - expected)
+}
+cat("Adjusted Rand index (FlowSOM vs SOM):", round(adjustedRand(flowsom, som), 3), "\n")
+```
 
 ---
 

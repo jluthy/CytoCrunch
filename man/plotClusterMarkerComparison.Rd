@@ -58,17 +58,22 @@ Generates a panel of boxplots or violin plots comparing a
   plotList for later retrieval.
 }
 \examples{
-\dontrun{
-# Boxplots for cluster 3 vs everything else
-blood <- plotClusterMarkerComparison(blood,
-             clusteringRunID = "BLOOD_C12",
-             clusterID       = 3)
+\donttest{
+if (requireNamespace("EmbedSOM", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  blood <- new("CytoCrunch", sampleName = "Blood3k",
+              inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+                                             package = "CytoCrunch"))
+  blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
 
-# Violin plots for a subset of markers
-blood <- plotClusterMarkerComparison(blood,
-             clusteringRunID = "BLOOD_C12",
-             clusterID       = 3,
-             plotType        = "violin",
-             markers         = c("CD3", "CD4", "CD8a", "CD19", "CD56"))
+  # Boxplots for cluster 3 vs everything else
+  blood <- plotClusterMarkerComparison(blood, clusteringRunID = "C1",
+                                       clusterID = 3)
+
+  # Violin plots for the first three markers
+  blood <- plotClusterMarkerComparison(blood, clusteringRunID = "C1",
+                                       clusterID = 3, plotType = "violin",
+                                       markers = head(getStainNames(blood), 3))
+}
 }
 }

@@ -73,7 +73,7 @@ A full walkthrough of the CytoCrunch analytical pipeline — data loading, FlowS
 
 **[View the CytoCrunch Demo Report](https://htmlpreview.github.io/?https://github.com/jluthy/CytoCrunch/blob/main/reports/CytoCrunch_Demo.html)**
 
-The source notebook lives in [`notebooks/CytoCrunch_Demo.Rmd`](notebooks/CytoCrunch_Demo.Rmd). Knitting it from RStudio will automatically write the HTML output to the `reports/` folder.
+The source notebook lives in [`notebooks/CytoCrunch_Demo.Rmd`](https://github.com/jluthy/CytoCrunch/blob/main/notebooks/CytoCrunch_Demo.Rmd). Knitting it from RStudio will automatically write the HTML output to the `reports/` folder.
 
 ## Contributing
 Improvements and new features will be added on a regular basis, please post on

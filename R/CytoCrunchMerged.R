@@ -69,9 +69,16 @@ getEmbeddingByRunID <- function(cytoCrunchObject, runID) {
 #' @param runIDs A character vector of run IDs corresponding to each CytoCrunch object.
 #' @return A CytoCrunchMerged object containing the merged data.
 #' @export
-#' @examples \dontrun{
-#' # Each object needs an embedding and a clustering with the given runID
-#' mergedObject <- mergeCytoCrunchObjects(list(obj1, obj2), c("Run1", "Run2"))
+#' @examples
+#' \donttest{
+#' if (requireNamespace("EmbedSOM", quietly = TRUE)) {
+#'   demo <- loadDemoData()
+#'   objs <- lapply(list(demo$blood, demo$liver), function(o) {
+#'     o <- performClustering(o, runID = "C1", method = "SOM", k = 10, seed = 1)
+#'     runUwot(o, runID = "C1", nThreads = 1)
+#'   })
+#'   merged <- mergeCytoCrunchObjects(objs, c("C1", "C1"))
+#' }
 #' }
 setGeneric("mergeCytoCrunchObjects", function(objects, runIDs) {
   standardGeneric("mergeCytoCrunchObjects")

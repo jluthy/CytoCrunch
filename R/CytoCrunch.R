@@ -240,7 +240,7 @@ setMethod("performClustering",
 #######################################################################
 ##         Perform Dimensionality Reduction with EmbedSOM     ##
 #######################################################################
-#' @title Perform dimensionality reduction with EmbedSOM
+#' @title Perform dimensionality reduction
 #' @return Returns the CytoCrunch object with the new DimRedClass object added
 #' @param object A CytoCrunch object
 #' @param runID A unique identifier for this run
@@ -256,8 +256,17 @@ setMethod("performClustering",
 #' @param fjMapSize Number of landmark points in the random map
 #' @param supLabel Name of the label column (\code{"supervised"}); 0 means unlabeled
 #' @param fjSuperWeight Weight of the labels (\code{"supervised"})
-#' @examples \dontrun{
-#' performEmbedding(object, runID = "808", method = "umap", fjSeed = 123,fjXdim = 10, fjYdim = 10, fjRLEN = 15, fjK = 25, fjAdjust = 0,fjSmooth = 0, fjUmap.Dist = 0.5, fjMapSize = 5000)
+#' @examples
+#' \donttest{
+#' if (requireNamespace("EmbedSOM", quietly = TRUE)) {
+#'   blood <- new("CytoCrunch", sampleName = "Blood3k",
+#'               inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+#'                                              package = "CytoCrunch"))
+#'   blood <- performEmbedding(blood, runID = "E1", method = "embedsom",
+#'                             fjSeed = 123, fjXdim = 10, fjYdim = 10,
+#'                             fjRLEN = 10, fjK = 15, fjAdjust = 0,
+#'                             fjSmooth = 0)
+#' }
 #' }
 #' @docType methods
 #' @export
@@ -328,7 +337,18 @@ setMethod("performEmbedding",
 #' @param embeddingRunID The runID of the embedding to plot
 #' @param clusteringRunID The runID of the clustering to overlay
 #' @param ... Currently unused
-#' @examples \dontrun{ plotEmbeddingWithClusters(object, embeddingRunID = "SLK9", clusteringRunID = "SLK8")}
+#' @examples
+#' \donttest{
+#' if (requireNamespace("EmbedSOM", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   blood <- new("CytoCrunch", sampleName = "Blood3k",
+#'               inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+#'                                              package = "CytoCrunch"))
+#'   blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+#'   blood <- runUwot(blood, runID = "U1", nThreads = 1)
+#'   plotEmbeddingWithClusters(blood, embeddingRunID = "U1", clusteringRunID = "C1")
+#' }
+#' }
 #' @docType methods
 #' @export
 #' @aliases plotEmbeddingWithClusters
@@ -406,10 +426,16 @@ setMethod("plotEmbeddingWithClusters",
 #'   Defaults to all markers.
 #' @param scale Passed to pheatmap: "row" (default), "column", or "none"
 #' @param ... Additional arguments forwarded to pheatmap::pheatmap()
-#' @examples \dontrun{
-#' flowData <- plotClusterHeatmap(flowData, clusteringRunID = "SLK8")
-#' flowData <- plotClusterHeatmap(flowData, clusteringRunID = "SLK8",
-#'                                markers = c("CCR7", "CD45RA"), scale = "none")
+#' @examples
+#' \donttest{
+#' if (requireNamespace("EmbedSOM", quietly = TRUE) &&
+#'     requireNamespace("pheatmap", quietly = TRUE)) {
+#'   blood <- new("CytoCrunch", sampleName = "Blood3k",
+#'               inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+#'                                              package = "CytoCrunch"))
+#'   blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+#'   blood <- plotClusterHeatmap(blood, clusteringRunID = "C1")
+#' }
 #' }
 #' @docType methods
 #' @export
@@ -530,8 +556,10 @@ loadDemoData <- function() {
 #' @return Returns the sampleName
 #' @param object A CytoCrunch object
 #' @rdname getSampleName
-#' @examples \dontrun{
-#' getSampleName(object)}
+#' @examples
+#' path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+#' blood <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+#' getSampleName(blood)
 #' @docType methods
 #' @export
 setGeneric("getSampleName", function(object) {
@@ -551,8 +579,10 @@ setMethod("getSampleName",
 #' @return Returns the parameter names from the exported population
 #' @param object A CytoCrunch object
 #' @rdname getParNames
-#' @examples \dontrun{
-#' getParNames(object)}
+#' @examples
+#' path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+#' blood <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+#' getParNames(blood)
 #' @docType methods
 #' @export
 setGeneric("getParNames", function(object) {
@@ -575,8 +605,10 @@ setMethod("getParNames",
 #' @return Returns the stain names if present from the exported population
 #' @param object A CytoCrunch object
 #' @rdname getStainNames
-#' @examples \dontrun{
-#' getStainNames(object)}
+#' @examples
+#' path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+#' blood <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+#' getStainNames(blood)
 #' @docType methods
 #' @export
 setGeneric("getStainNames", function(object) {

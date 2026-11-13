@@ -9,3 +9,4 @@
 ^LICENSE\.md$
 ^CytoCrunch\.Rcheck$
 ^CytoCrunch_.*\.tar\.gz$
+^cran-comments\.md$

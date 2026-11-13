@@ -29,5 +29,15 @@ Returns a ggplot2 object
 This function plots an embedding with clusters overlaid.
 }
 \examples{
-\dontrun{ plotEmbeddingWithClusters(object, embeddingRunID = "SLK9", clusteringRunID = "SLK8")}
+\donttest{
+if (requireNamespace("EmbedSOM", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  blood <- new("CytoCrunch", sampleName = "Blood3k",
+              inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+                                             package = "CytoCrunch"))
+  blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+  blood <- runUwot(blood, runID = "U1", nThreads = 1)
+  plotEmbeddingWithClusters(blood, embeddingRunID = "U1", clusteringRunID = "C1")
+}
+}
 }

@@ -4,7 +4,7 @@
 \name{performEmbedding}
 \alias{performEmbedding}
 \alias{performEmbedding,CytoCrunch-method}
-\title{Perform dimensionality reduction with EmbedSOM}
+\title{Perform dimensionality reduction}
 \usage{
 performEmbedding(object, runID, method = "umap", ...)
 
@@ -58,10 +58,18 @@ performEmbedding(object, runID, method = "umap", ...)
 Returns the CytoCrunch object with the new DimRedClass object added
 }
 \description{
-Perform dimensionality reduction with EmbedSOM
+Perform dimensionality reduction
 }
 \examples{
-\dontrun{
-performEmbedding(object, runID = "808", method = "umap", fjSeed = 123,fjXdim = 10, fjYdim = 10, fjRLEN = 15, fjK = 25, fjAdjust = 0,fjSmooth = 0, fjUmap.Dist = 0.5, fjMapSize = 5000)
+\donttest{
+if (requireNamespace("EmbedSOM", quietly = TRUE)) {
+  blood <- new("CytoCrunch", sampleName = "Blood3k",
+              inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+                                             package = "CytoCrunch"))
+  blood <- performEmbedding(blood, runID = "E1", method = "embedsom",
+                            fjSeed = 123, fjXdim = 10, fjYdim = 10,
+                            fjRLEN = 10, fjK = 15, fjAdjust = 0,
+                            fjSmooth = 0)
+}
 }
 }

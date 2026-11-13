@@ -20,6 +20,7 @@ Returns the stain names if present from the exported population
 This function returns the stain names if present from the exported population
 }
 \examples{
-\dontrun{
-getStainNames(object)}
+path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+blood <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+getStainNames(blood)
 }

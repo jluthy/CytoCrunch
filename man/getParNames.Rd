@@ -20,6 +20,7 @@ Returns the parameter names from the exported population
 This function returns the parameter names if present from the exported population
 }
 \examples{
-\dontrun{
-getParNames(object)}
+path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+blood <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+getParNames(blood)
 }

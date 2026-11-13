@@ -2,9 +2,12 @@
 % Please edit documentation in R/CytoCrunchMerged.R
 \name{mergeCytoCrunchObjects}
 \alias{mergeCytoCrunchObjects}
+\alias{mergeCytoCrunchObjects,list-method}
 \title{mergeCytoCrunchObjects}
 \usage{
 mergeCytoCrunchObjects(objects, runIDs)
+
+\S4method{mergeCytoCrunchObjects}{list}(objects, runIDs)
 }
 \arguments{
 \item{objects}{A list of CytoCrunch objects to merge.}
@@ -18,16 +21,8 @@ A CytoCrunchMerged object containing the merged data.
 Merge multiple CytoCrunch objects into a single CytoCrunchMerged object
 }
 \examples{
-# Create two CytoCrunch objects
-obj1 <- new("CytoCrunch",
-           sampleName = "Sample1",
-           inputCSVFilePath = "data/sample1.csv"
-           )
-obj2 <- new("CytoCrunch",
-          sampleName = "Sample2",
-          inputCSVFilePath = "data/sample2.csv"
-          )
-# Merge the CytoCrunch objects
+\dontrun{
+# Each object needs an embedding and a clustering with the given runID
 mergedObject <- mergeCytoCrunchObjects(list(obj1, obj2), c("Run1", "Run2"))
-print(mergedObject)
+}
 }

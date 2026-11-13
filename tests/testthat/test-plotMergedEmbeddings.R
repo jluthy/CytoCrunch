@@ -1,4 +1,8 @@
 test_that("plotMergedEmbeddings works for CytoCrunchMerged object", {
+  skip_if_not_installed("FlowSOM")
+  skip_if_not_installed("EmbedSOM")
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("gridExtra")
   csv_path1 <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
   csv_path2 <- system.file("extdata", "LymphNode3k.ExtNode.csv", package = "CytoCrunch")
   # Create the two object to be merged

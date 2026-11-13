@@ -15,6 +15,17 @@ install.packages("devtools")
 devtools::install_github("jluthy/CytoCrunch")
 ```
 
+FlowJo/SeqGeq plugins that install CytoCrunch at run time should pin a tagged
+release rather than the moving development branch:
+
+``` r
+remotes::install_github("jluthy/CytoCrunch@v0.3.0")
+```
+
+Loading data and running UMAP only needs `data.table` and `uwot`. `FlowSOM`
+(Bioconductor), `EmbedSOM`, `ggplot2`, `gridExtra` and `pheatmap` are optional and only
+needed for clustering and plotting.
+
 ## Example
 
 CytoCrunch is designed to work with FlowJo v10 workspace data as it is exported from FlowJo during a plugin process. You can create a new CytoCrunch object and load a csv file of expression data exported from a FlowJo plugin process like this:
@@ -39,6 +50,21 @@ flowData <- performEmbedding(flowData, runID = "SLK8", method = "umap", fjSeed =
 # Generate a plot of embedding and clustering results
 plotObj <- plotEmbeddingWithClusters(flowData, embeddingRunID = "SLK8", clusteringRunID = "SLK8")
 
+```
+
+## UMAP with a reusable model (for plugins)
+
+``` r
+flowData <- new("CytoCrunch", sampleName = "Blood3k",
+                inputCSVFilePath = "./inst/extdata/Blood3k.ExtNode.csv")
+
+# Fit UMAP and keep the model; use y = "<column>" for supervised UMAP
+flowData <- runUwot(flowData, runID = "U1", nNeighbors = 15, minDist = 0.01, seed = 42)
+coords   <- getEmbedding(flowData, "U1")
+
+# Save one self-contained file, then place new data into the same map later
+saveEmbeddingModel(flowData, "U1", "umap_model.rds")
+newData <- applyEmbeddingModel(newData, "umap_model.rds", runID = "U1_applied")
 ```
 
 ## Demo

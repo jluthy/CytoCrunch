@@ -1,4 +1,7 @@
 test_that("plotClass object can be created", {
+  skip_if_not_installed("FlowSOM")
+  skip_if_not_installed("EmbedSOM")
+  skip_if_not_installed("ggplot2")
   csv_path1 <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
   # Create the two object to be merged
   flowData <- new("CytoCrunch",

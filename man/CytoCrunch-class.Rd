@@ -4,6 +4,7 @@
 \name{CytoCrunch-class}
 \alias{CytoCrunch-class}
 \alias{CytoCrunch}
+\alias{initialize,CytoCrunch-method}
 \title{The CytoCrunch Class}
 \format{
 An object of class \code{CytoCrunch} is a list of slots that store information about the sample, expression data, and results of clustering and dimensionality reduction methods.
@@ -11,6 +12,15 @@ Initialize an empty plotList when creating a new CytoCrunch object
 }
 \usage{
 \S4method{initialize}{CytoCrunch}(.Object, sampleName, inputCSVFilePath, ...)
+}
+\arguments{
+\item{.Object}{The new object (supplied by \code{new()})}
+
+\item{sampleName}{A name for the sample}
+
+\item{inputCSVFilePath}{Path to the CSV exported from FlowJo or SeqGeq}
+
+\item{...}{Passed on to the next \code{initialize} method}
 }
 \description{
 The CytoCrunch object is a representation of a gated population of cells that

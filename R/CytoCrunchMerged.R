@@ -69,22 +69,14 @@ getEmbeddingByRunID <- function(cytoCrunchObject, runID) {
 #' @param runIDs A character vector of run IDs corresponding to each CytoCrunch object.
 #' @return A CytoCrunchMerged object containing the merged data.
 #' @export
-#' @examples
-#' # Create two CytoCrunch objects
-#' obj1 <- new("CytoCrunch",
-#'            sampleName = "Sample1",
-#'            inputCSVFilePath = "data/sample1.csv"
-#'            )
-#' obj2 <- new("CytoCrunch",
-#'           sampleName = "Sample2",
-#'           inputCSVFilePath = "data/sample2.csv"
-#'           )
-#' # Merge the CytoCrunch objects
+#' @examples \dontrun{
+#' # Each object needs an embedding and a clustering with the given runID
 #' mergedObject <- mergeCytoCrunchObjects(list(obj1, obj2), c("Run1", "Run2"))
-#' print(mergedObject)
+#' }
 setGeneric("mergeCytoCrunchObjects", function(objects, runIDs) {
   standardGeneric("mergeCytoCrunchObjects")
 })
+#' @rdname mergeCytoCrunchObjects
 setMethod("mergeCytoCrunchObjects",
           signature(objects = "list"),
           function(objects, runIDs) {
@@ -150,6 +142,7 @@ setMethod("mergeCytoCrunchObjects",
 #' @title Plot Merged Embeddings
 #' @description Plot the merged embeddings from a CytoCrunchMerged object
 #' @param mergedObject A CytoCrunchMerged object containing the merged embeddings
+#' @param ... Currently unused
 #' @return A grid of plots showing the merged embeddings
 #' @export
 #' @examples
@@ -162,14 +155,21 @@ setMethod("mergeCytoCrunchObjects",
 #'                   mergedClusters = list(factor(1:5), factor(1:5)),
 #'                   additionalData = list(list(), list())
 #'                   )
-#' # Plot the merged embeddings
-#' plotMergedEmbeddings(mergedObject)
+#' # Plot the merged embeddings (needs ggplot2 and gridExtra)
+#' if (requireNamespace("ggplot2", quietly = TRUE) &&
+#'     requireNamespace("gridExtra", quietly = TRUE)) {
+#'   plotMergedEmbeddings(mergedObject)
+#' }
 setGeneric("plotMergedEmbeddings", function(mergedObject, ...) {
   standardGeneric("plotMergedEmbeddings")
 })
+#' @rdname plotMergedEmbeddings
 setMethod("plotMergedEmbeddings",
           signature(mergedObject = "CytoCrunchMerged"),
           function(mergedObject) {
+
+            .requireSuggested("ggplot2", "plotting")
+            .requireSuggested("gridExtra", "arranging merged plots")
 
             # Check if there are embeddings to plot
             if (length(mergedObject@mergedEmbeddings) < 1) {
@@ -194,9 +194,10 @@ setMethod("plotMergedEmbeddings",
               )
 
               # Generate the plot
-              p <- ggplot(plotData, aes(x = X, y = Y, color = cluster)) +
-                geom_point(alpha = 0.6) +
-                labs(title = paste(toupper(methodLabel), "Embedding for Run ID:", runID),
+              X <- Y <- cluster <- NULL  # column names used by aes()
+              p <- ggplot2::ggplot(plotData, ggplot2::aes(x = X, y = Y, color = cluster)) +
+                ggplot2::geom_point(alpha = 0.6) +
+                ggplot2::labs(title = paste(toupper(methodLabel), "Embedding for Run ID:", runID),
                      color = "Cluster")
 
               # Store each plot
@@ -213,6 +214,7 @@ setMethod("plotMergedEmbeddings",
 #' @title Get Sample Names of Merged Objects
 #' @description Get the sample names from a CytoCrunchMerged object
 #' @param mergedObject A CytoCrunchMerged object
+#' @param ... Currently unused
 #' @return A character vector of sample names
 #' @export
 #' @examples
@@ -230,6 +232,7 @@ setMethod("plotMergedEmbeddings",
 setGeneric("getSampleNamesMerged", function(mergedObject, ...) {
   standardGeneric("getSampleNamesMerged")
 })
+#' @rdname getSampleNamesMerged
 setMethod("getSampleNamesMerged",
           signature(mergedObject = "CytoCrunchMerged"),
           function(mergedObject) {
@@ -239,6 +242,7 @@ setMethod("getSampleNamesMerged",
 #' @title Get Run IDs
 #' @description Get the run IDs from a CytoCrunchMerged object
 #' @param mergedObject A CytoCrunchMerged object
+#' @param ... Currently unused
 #' @return A character vector of run IDs
 #' @export
 #' @examples
@@ -256,6 +260,7 @@ setMethod("getSampleNamesMerged",
 setGeneric("getRunIDsMerged", function(mergedObject, ...) {
   standardGeneric("getRunIDsMerged")
 })
+#' @rdname getRunIDsMerged
 setMethod("getRunIDsMerged",
           signature(mergedObject = "CytoCrunchMerged"),
           function(mergedObject) {

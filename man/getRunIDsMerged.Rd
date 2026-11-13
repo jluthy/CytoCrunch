@@ -2,12 +2,17 @@
 % Please edit documentation in R/CytoCrunchMerged.R
 \name{getRunIDsMerged}
 \alias{getRunIDsMerged}
+\alias{getRunIDsMerged,CytoCrunchMerged-method}
 \title{Get Run IDs}
 \usage{
 getRunIDsMerged(mergedObject, ...)
+
+\S4method{getRunIDsMerged}{CytoCrunchMerged}(mergedObject)
 }
 \arguments{
 \item{mergedObject}{A CytoCrunchMerged object}
+
+\item{...}{Currently unused}
 }
 \value{
 A character vector of run IDs

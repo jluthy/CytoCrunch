@@ -1,4 +1,5 @@
 test_that("DimRedClass object can be created", {
+  skip_if_not_installed("EmbedSOM")
   csv_path1 <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
   # Example data for testing
   flowData <- new("CytoCrunch",

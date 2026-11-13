@@ -4,3 +4,11 @@ CytoCrunch.Rproj
 .RData
 .Ruserdata
 .DS_Store
+
+# Local project memory (clinical-data confidentiality; never push)
+memory/
+
+# Local-only agent files
+.claude/
+CLAUDE.md
+skills/

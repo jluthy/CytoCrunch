@@ -3,12 +3,15 @@
 \docType{methods}
 \name{plotEmbeddingWithClusters}
 \alias{plotEmbeddingWithClusters}
+\alias{plotEmbeddingWithClusters,CytoCrunch-method}
 \title{Plot an embedding with clusters}
 \format{
 A ggplot2 object
 }
 \usage{
 plotEmbeddingWithClusters(object, embeddingRunID, clusteringRunID, ...)
+
+\S4method{plotEmbeddingWithClusters}{CytoCrunch}(object, embeddingRunID, clusteringRunID)
 }
 \arguments{
 \item{object}{A CytoCrunch object}
@@ -16,6 +19,8 @@ plotEmbeddingWithClusters(object, embeddingRunID, clusteringRunID, ...)
 \item{embeddingRunID}{The runID of the embedding to plot}
 
 \item{clusteringRunID}{The runID of the clustering to overlay}
+
+\item{...}{Currently unused}
 }
 \value{
 Returns a ggplot2 object

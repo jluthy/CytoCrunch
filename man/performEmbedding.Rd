@@ -33,6 +33,26 @@ performEmbedding(object, runID, method = "umap", ...)
 \item{method}{The dimensionality reduction method to use}
 
 \item{...}{Additional arguments to pass to the method}
+
+\item{fjSeed}{Random seed}
+
+\item{fjXdim, fjYdim}{Dimensions of the SOM grid (\code{"embedsom"})}
+
+\item{fjRLEN}{Number of SOM training rounds (\code{"embedsom"})}
+
+\item{fjK}{Number of nearest SOM nodes used by EmbedSOM}
+
+\item{fjAdjust}{EmbedSOM \code{adjust} parameter}
+
+\item{fjSmooth}{EmbedSOM \code{smooth} parameter}
+
+\item{fjUmap.Dist}{UMAP minimum distance (\code{"umap"}, \code{"supervised"})}
+
+\item{fjMapSize}{Number of landmark points in the random map}
+
+\item{supLabel}{Name of the label column (\code{"supervised"}); 0 means unlabeled}
+
+\item{fjSuperWeight}{Weight of the labels (\code{"supervised"})}
 }
 \value{
 Returns the CytoCrunch object with the new DimRedClass object added

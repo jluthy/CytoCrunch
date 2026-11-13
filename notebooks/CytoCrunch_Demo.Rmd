@@ -1,7 +1,7 @@
 ---
 title: "CytoCrunch: Flow Cytometry Analysis Pipeline"
 subtitle: "Clustering, Dimensionality Reduction & Visualization Demo"
-author: "Jason Luthy"
+author: "Joshua Luthy"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -432,7 +432,7 @@ cc_palette <- c(
 This notebook demonstrates the core analytical pipeline:
 
 1. **Data loading** — importing FlowJo-exported CSV data into CytoCrunch objects
-2. **Clustering** — FlowSOM-based automated cell population discovery
+2. **Clustering** — automated cell population discovery with FlowSOM, or with the dependency-light `SOM` method
 3. **Dimensionality reduction** — t-SNE and UMAP embeddings for visualization
 4. **Visualization** — publication-ready plots including embeddings, heatmaps, and merged multi-sample views
 
@@ -542,6 +542,24 @@ spleen <- performClustering(spleen,
                             method = "FlowSOM",
                             k      = 12)
 ```
+
+## SOM Clustering (No Bioconductor Required)
+
+FlowSOM is distributed through Bioconductor, which can be inconvenient to install. CytoCrunch therefore also offers `method = "SOM"`. It trains a self-organising map with **EmbedSOM** (available from CRAN), clusters the map's node codebook vectors with Ward hierarchical clustering into `k` groups, and gives each cell the label of its node. It needs only EmbedSOM, and accepts the same `k` and `runID` arguments as FlowSOM. Optional `xdim`, `ydim`, `rlen` and `seed` arguments control the map size, training length and reproducibility.
+
+Here we cluster the same Blood data again with `SOM`, under a separate `runID`, so the two methods can be compared side by side later on:
+
+```{r cluster-blood-som}
+blood <- performClustering(blood,
+                           runID  = "BLOOD_SOM12",
+                           method = "SOM",
+                           k      = 12,
+                           seed   = 1)
+```
+
+<div class="callout-note">
+<strong>FlowSOM vs SOM</strong> — The two methods build the same kind of self-organising map but differ in the metaclustering step (FlowSOM uses consensus clustering, `SOM` uses Ward hierarchical clustering), so cluster labels and boundaries will not be identical even for the same `k`. Use FlowSOM when you need results comparable to FlowJo's own FlowSOM plugin.
+</div>
 
 <div class="callout-note">
 <strong>Run IDs</strong> — Each clustering and embedding call is tagged with a `runID` string. This lets you store multiple analyses (different `k` values, methods, parameters) on the same object and reference them independently downstream.
@@ -726,6 +744,49 @@ blood <- plotClusterMarkerComparison(blood,
 
 ---
 
+## Comparing FlowSOM and SOM Clustering
+
+Because every result is stored under its own `runID`, we can overlay the `SOM` clusters on the Blood t-SNE embedding that was computed earlier. The embedding does not change; only the cluster labels do.
+
+```{r plot-blood-som-embed, fig.height=7}
+plotEmbeddingWithClusters(blood,
+                          embeddingRunID  = "BLOOD_C12",
+                          clusteringRunID = "BLOOD_SOM12")
+```
+
+The same heatmap used for FlowSOM works unchanged on the `SOM` clusters:
+
+```{r heatmap-som}
+blood <- plotClusterHeatmap(blood, clusteringRunID = "BLOOD_SOM12")
+```
+
+### How closely do the two methods agree?
+
+The cross-tabulation shows how the cells of each FlowSOM cluster (rows) are split across the `SOM` clusters (columns). The adjusted Rand index summarises the overall agreement: 1 means identical groupings and values near 0 mean no better than chance.
+
+```{r compare-methods}
+getClusters <- function(obj, runID) {
+  Filter(function(x) x@runID == runID, obj@clusteringList)[[1]]@result$clusters
+}
+flowsom <- getClusters(blood, "BLOOD_C12")
+som     <- getClusters(blood, "BLOOD_SOM12")
+
+table(FlowSOM = flowsom, SOM = som)
+
+adjustedRand <- function(a, b) {
+  tab <- table(a, b)
+  choose2 <- function(x) x * (x - 1) / 2
+  sumCells <- sum(choose2(tab))
+  sumRows  <- sum(choose2(rowSums(tab)))
+  sumCols  <- sum(choose2(colSums(tab)))
+  expected <- sumRows * sumCols / choose2(sum(tab))
+  (sumCells - expected) / ((sumRows + sumCols) / 2 - expected)
+}
+cat("Adjusted Rand index (FlowSOM vs SOM):", round(adjustedRand(flowsom, som), 3), "\n")
+```
+
+---
+
 ## Merged Multi-Tissue Analysis
 
 One of CytoCrunch's key capabilities is **merging multiple CytoCrunch objects** for cross-tissue comparison. The `mergeCytoCrunchObjects()` function concatenates expression data, embeddings, and cluster assignments while preserving sample provenance.
@@ -748,6 +809,123 @@ plotMergedEmbeddings(mergedCC)
 
 ---
 
+# Reusable UMAP: Apply on Map
+
+The `performEmbedding()` methods shown earlier are based on EmbedSOM and do not keep a model that can be reused. For workflows where **new cells must be placed into an existing map**, such as FlowJo's "Apply on Map", CytoCrunch provides a direct `uwot` path:
+
+| Function | Purpose |
+|---|---|
+| `runUwot()` | Run UMAP (unsupervised, or supervised on a label column) and keep the fitted model |
+| `saveEmbeddingModel()` / `loadEmbeddingModel()` | Write and read one self-contained model file |
+| `applyEmbeddingModel()` | Place new data into a saved map |
+| `getEmbedding()` / `getEmbeddingInfo()` | Retrieve coordinates and run details |
+
+## Fit a UMAP and Keep the Model
+
+```{r umap-fit}
+blood <- runUwot(blood,
+                 runID      = "BLOOD_UMAP",
+                 nNeighbors = 15,
+                 minDist    = 0.1,
+                 seed       = 42,
+                 nThreads   = 2)
+
+dim(getEmbedding(blood, "BLOOD_UMAP"))
+getEmbeddingInfo(blood, "BLOOD_UMAP")
+```
+
+`getEmbeddingInfo()` reports the embedding type (`"UMAP"`, or `"sUMAP"` for supervised runs), the number of dimensions, the run that holds the model, and the number of threads used. By default all expression columns are used as features; pass `markers = c(...)` to use a subset, and `y = "<column>"` (with `targetWeight`) to supervise the map with a column of cluster labels, where 0 means unlabeled.
+
+## Using Multiple Threads
+
+UMAP is the slowest step for large populations, so `runUwot()` and `applyEmbeddingModel()` can use several threads through the `nThreads` argument. If you do not set it, CytoCrunch uses `max(1, parallel::detectCores() - 1)` threads, leaving one core free.
+
+With **uwot 0.2.0 or newer**, multithreaded runs are also reproducible: CytoCrunch passes `n_threads`, `n_sgd_threads`, `batch = TRUE` and your `seed` to uwot. Running the same data with the same seed and the same `nThreads` therefore gives identical coordinates:
+
+```{r umap-threads}
+blood <- runUwot(blood,
+                 runID      = "BLOOD_UMAP_REPEAT",
+                 nNeighbors = 15,
+                 minDist    = 0.1,
+                 seed       = 42,
+                 nThreads   = 2)
+
+cat("uwot version:", as.character(packageVersion("uwot")), "\n")
+cat("Identical to first run:",
+    identical(getEmbedding(blood, "BLOOD_UMAP"),
+              getEmbedding(blood, "BLOOD_UMAP_REPEAT")), "\n")
+```
+
+<div class="callout-note">
+<strong>Threads and reproducibility</strong> — Keep <code>nThreads</code> fixed (and record it) when you need exactly repeatable maps; the number used is stored with each run and returned by <code>getEmbeddingInfo()</code>. On older uwot versions (before 0.2.0) CytoCrunch cannot control threading: it sets the seed and runs without the threading arguments, and <code>threadsUsed</code> is reported as <code>NA</code>. On shared machines, choose a smaller <code>nThreads</code> than the default.
+</div>
+
+## Save the Model
+
+`saveEmbeddingModel()` writes the model, the marker names in training order, and the run settings into **one file**. Nothing in it points to a path on your machine, so the file keeps working after you move it to another folder or computer.
+
+```{r umap-save}
+modelFile <- file.path(tempdir(), "blood_umap_model.rds")
+saveEmbeddingModel(blood, "BLOOD_UMAP", modelFile)
+file.exists(modelFile)
+```
+
+In practice, save the file somewhere permanent. It is a normal `.rds` file that you can load later, even in a new R session.
+
+## Apply the Map to New Data
+
+Now we load the model and place the **Lymph Node** cells into the map trained on **Blood**. `applyEmbeddingModel()` matches columns to the model **by name** and reorders them to the training order, so the new data's column order does not matter, and any extra columns are ignored.
+
+```{r umap-apply}
+savedModel <- loadEmbeddingModel(modelFile)
+
+lymphNode <- applyEmbeddingModel(lymphNode,
+                                 savedModel,
+                                 runID    = "LN_ON_BLOOD",
+                                 nThreads = 2)
+
+getEmbeddingInfo(lymphNode, "LN_ON_BLOOD")
+```
+
+The reported `modelRunID` is the run the map came from. The applied cells are positioned relative to the Blood cells, so both sets share one coordinate system and can be plotted together:
+
+```{r umap-apply-plot, fig.height=7}
+bloodXY <- getEmbedding(blood, "BLOOD_UMAP")
+lnXY    <- getEmbedding(lymphNode, "LN_ON_BLOOD")
+
+mapDF <- rbind(
+  data.frame(UMAP1 = bloodXY[, 1], UMAP2 = bloodXY[, 2], sample = "Blood (map)"),
+  data.frame(UMAP1 = lnXY[, 1],    UMAP2 = lnXY[, 2],    sample = "Lymph Node (applied)")
+)
+
+ggplot(mapDF, aes(x = UMAP1, y = UMAP2, color = sample)) +
+  geom_point(alpha = 0.6, size = 0.9) +
+  scale_color_manual(values = c("Blood (map)" = "#3a5a70",
+                                "Lymph Node (applied)" = "#00d4ff")) +
+  labs(title    = "Lymph Node cells placed into the Blood UMAP",
+       subtitle = "Model fitted on Blood; Lymph Node transformed with applyEmbeddingModel()",
+       color    = "Sample")
+```
+
+Regions where the Lymph Node cells overlap the Blood cells are phenotypes the two tissues share; Lymph Node cells that land away from the Blood cloud have no close counterpart in the Blood map.
+
+## What Happens If a Marker Is Missing?
+
+Because matching is by name, new data must contain every marker the model was trained on. If any are missing, `applyEmbeddingModel()` stops and lists them rather than silently guessing:
+
+```{r umap-missing-marker}
+incomplete <- lymphNode
+incomplete@inputCSV$X <- incomplete@inputCSV$X[, -(1:2)]
+
+msg <- tryCatch(
+  applyEmbeddingModel(incomplete, savedModel, runID = "BROKEN", nThreads = 2),
+  error = function(e) conditionMessage(e)
+)
+cat(msg)
+```
+
+---
+
 # Session Info
 
 ```{r session-info}
@@ -758,6 +936,6 @@ sessionInfo()
 
 <div style="text-align:center; margin-top:4rem; padding:2rem 0; border-top:1px solid #1a2e42;">
 <p style="font-family:'Space Mono', monospace; font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#3a5a70;">
-CytoCrunch · Jason Luthy · <a href="https://github.com/jluthy/CytoCrunch" style="color:#00d4ff !important;">github.com/jluthy/CytoCrunch</a>
+CytoCrunch · Joshua Luthy · <a href="https://github.com/jluthy/CytoCrunch" style="color:#00d4ff !important;">github.com/jluthy/CytoCrunch</a>
 </p>
 </div>

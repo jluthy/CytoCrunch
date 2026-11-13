@@ -36,8 +36,6 @@
 #'              markers         = c("CD3", "CD4", "CD8a", "CD19", "CD56"))
 #' }
 #' @docType methods
-#' @importFrom ggplot2 ggplot aes geom_boxplot geom_violin facet_wrap labs
-#'   scale_fill_manual theme element_text
 #' @export
 setGeneric("plotClusterMarkerComparison",
            function(object, clusteringRunID, clusterID,
@@ -51,10 +49,12 @@ setMethod("plotClusterMarkerComparison",
           function(object, clusteringRunID, clusterID,
                    plotType = "boxplot", markers = NULL, ncol = 4, ...) {
 
-            # ── Validate plotType ──────────────────────────────────────────
+            .requireSuggested("ggplot2", "plotting")
+
+            # -- Validate plotType --
             plotType <- match.arg(plotType, choices = c("boxplot", "violin"))
 
-            # ── Find clustering by runID ───────────────────────────────────
+            # -- Find clustering by runID --
             clusteringObj <- NULL
             for (cluster in object@clusteringList) {
               if (cluster@runID == clusteringRunID) {
@@ -68,7 +68,7 @@ setMethod("plotClusterMarkerComparison",
 
             clusters <- clusteringObj@result$clusters
 
-            # ── Validate clusterID ─────────────────────────────────────────
+            # -- Validate clusterID --
             availableClusters <- sort(unique(clusters))
             if (!(clusterID %in% availableClusters)) {
               stop(paste0(
@@ -78,14 +78,14 @@ setMethod("plotClusterMarkerComparison",
               ))
             }
 
-            # ── Build expression matrix with marker labels ─────────────────
+            # -- Build expression matrix with marker labels --
             exprMat    <- object@inputCSV$X
             stainNames <- object@parameterNames$fjStainNames
             parNames   <- object@parameterNames$fjParNames
             markerLabels <- ifelse(is.na(stainNames), parNames, stainNames)
             colnames(exprMat) <- markerLabels
 
-            # ── Optionally subset to requested markers ─────────────────────
+            # -- Optionally subset to requested markers --
             if (!is.null(markers)) {
               missing <- setdiff(markers, colnames(exprMat))
               if (length(missing) > 0) {
@@ -98,13 +98,13 @@ setMethod("plotClusterMarkerComparison",
               exprMat <- exprMat[, markers, drop = FALSE]
             }
 
-            # ── Create group label: selected cluster vs rest ───────────────
+            # -- Create group label: selected cluster vs rest --
             group <- ifelse(clusters == clusterID,
                             paste0("Cluster ", clusterID),
                             "Rest")
             group <- factor(group, levels = c(paste0("Cluster ", clusterID), "Rest"))
 
-            # ── Compute median difference per marker for sort order ────────
+            # -- Compute median difference per marker for sort order --
             focalIdx <- clusters == clusterID
             medianDiff <- apply(exprMat, 2, function(col) {
               median(col[focalIdx]) - median(col[!focalIdx])
@@ -113,7 +113,7 @@ setMethod("plotClusterMarkerComparison",
             # Sort by absolute difference (largest first)
             markerOrder <- names(sort(abs(medianDiff), decreasing = TRUE))
 
-            # ── Build long-format data frame for ggplot ────────────────────
+            # -- Build long-format data frame for ggplot --
             markerCols <- colnames(exprMat)
             longDF <- data.frame(
               group      = rep(group, times = length(markerCols)),
@@ -125,7 +125,8 @@ setMethod("plotClusterMarkerComparison",
             # Apply sort order via factor levels
             longDF$marker <- factor(longDF$marker, levels = markerOrder)
 
-            # ── Build ggplot ───────────────────────────────────────────────
+            # -- Build ggplot --
+            group <- marker <- expression <- NULL  # column names used by aes()/facet_wrap()
             p <- ggplot2::ggplot(longDF,
                                  ggplot2::aes(x = group,
                                               y = expression,
@@ -146,12 +147,12 @@ setMethod("plotClusterMarkerComparison",
             p <- p +
               ggplot2::facet_wrap(~ marker, scales = "free_y", ncol = ncol) +
               ggplot2::scale_fill_manual(
-                values = c(setNames("#00d4ff", paste0("Cluster ", clusterID)),
+                values = c(stats::setNames("#00d4ff", paste0("Cluster ", clusterID)),
                            c("Rest" = "#3a5a70"))
               ) +
               ggplot2::labs(
                 title    = paste0("Cluster ", clusterID,
-                                  " vs Rest — Marker Expression Comparison"),
+                                  " vs Rest - Marker Expression Comparison"),
                 subtitle = paste0("Clustering: ", clusteringRunID,
                                   "  |  Sorted by absolute median difference"),
                 x        = NULL,
@@ -165,7 +166,7 @@ setMethod("plotClusterMarkerComparison",
 
             print(p)
 
-            # ── Store in PlotClass and append to plotList ──────────────────
+            # -- Store in PlotClass and append to plotList --
             plotObj <- createPlotClass(
               runID      = clusteringRunID,
               plotType   = paste0("clusterComparison_", plotType, "_cluster", clusterID),

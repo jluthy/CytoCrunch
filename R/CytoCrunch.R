@@ -55,6 +55,11 @@ setClass("CytoCrunch",
 #' @aliases CytoCrunch
 #' @format An object of class \code{CytoCrunch} is a list of slots that store information about the sample, expression data, and results of clustering and dimensionality reduction methods.
 #' Initialize an empty plotList when creating a new CytoCrunch object
+#' @param .Object The new object (supplied by \code{new()})
+#' @param sampleName A name for the sample
+#' @param inputCSVFilePath Path to the CSV exported from FlowJo or SeqGeq
+#' @param ... Passed on to the next \code{initialize} method
+#' @aliases initialize,CytoCrunch-method
 setMethod("initialize", "CytoCrunch",
           function(.Object, sampleName, inputCSVFilePath, ...) {
             # Call the parent class's initialize method to set up slots
@@ -74,15 +79,23 @@ setMethod("initialize", "CytoCrunch",
 ##         Load a file from single csv file     ##
 #######################################################################
 #' @title Load data into CytoCrunch object
+#' @description Reads a CSV exported by a FlowJo or SeqGeq plugin process. The
+#'   identifier columns \code{EventNumberDP} (FlowJo) and \code{CellId} (SeqGeq)
+#'   are removed from the expression matrix when present and stored separately
+#'   as \code{inputCSV$eventNumbers} and \code{inputCSV$cellIds}. All remaining
+#'   columns must be numeric.
 #' @return Returns the newly created object
 #' @param object A CytoCrunch object
 #' @param csvPath The path to the exported csv file from FlowJo
-#' @param eventNumber The column name for event numbers or cell ids
+#' @param eventNumber The column name for FlowJo event numbers
+#'   (default \code{"EventNumberDP"}). The SeqGeq \code{CellId} column is always
+#'   handled as well.
 #' @importFrom data.table fread
 #' @importFrom data.table :=
-#' @examples \dontrun{
-#' inputCSVpath <- "/Documents/ExtNode.csv"
-#' myobject <- loadFlowJoCSV(object, inputCSVpath, eventNumber = "EventNumberDP")}
+#' @examples
+#' path <- system.file("extdata", "Blood3k.ExtNode.csv", package = "CytoCrunch")
+#' myobject <- new("CytoCrunch", sampleName = "Blood3k", inputCSVFilePath = path)
+#' dim(myobject@inputCSV$X)
 #' @docType methods
 #' @export
 setGeneric("loadFlowJoCSV", function(object, csvPath, eventNumber = "EventNumberDP") {
@@ -92,24 +105,32 @@ setGeneric("loadFlowJoCSV", function(object, csvPath, eventNumber = "EventNumber
 setMethod("loadFlowJoCSV",
           "CytoCrunch",
           function(object, csvPath, eventNumber = "EventNumberDP") {
-            # Ensure data.table is available
-            if (!requireNamespace("data.table", quietly = TRUE)) {
-              stop("data.table package is not available")
+            data <- data.table::fread(csvPath, check.names = FALSE)
+            names(data) <- trimws(names(data))
+
+            # Pull out the ID columns (FlowJo: EventNumberDP, SeqGeq: CellId)
+            takeId <- function(col) {
+              if (col %in% names(data)) {
+                ids <- matrix(data[[col]], ncol = 1, dimnames = list(NULL, col))
+                data.table::set(data, j = col, value = NULL)
+                ids
+              } else {
+                matrix(numeric(0), nrow = nrow(data), ncol = 0)
+              }
+            }
+            eventNumbers <- takeId(eventNumber)
+            cellIds <- if (identical(eventNumber, "CellId")) matrix(numeric(0), nrow = nrow(data), ncol = 0) else takeId("CellId")
+            if (ncol(eventNumbers) == 0 && ncol(cellIds) == 0) {
+              warning("Neither '", eventNumber, "' nor 'CellId' column found in the provided CSV. ",
+                      "Event IDs will be left empty.", call. = FALSE)
             }
 
-            # Using fread from data.table
-            data <- data.table::fread(csvPath, check.names = FALSE)
-
-            # Initialize empty matrix for eventNumbers
-            eventNumbers <- matrix(nrow = nrow(data), ncol = 0)
-
-            # Handle specified eventNumber column
-            if (eventNumber %in% names(data)) {
-              eventNumbers <- as.matrix(data[[eventNumber]])
-              # Remove specified eventNumber column using set()
-              data.table::set(data, j = eventNumber, value = NULL)
-            } else {
-              warning(paste("Column", eventNumber, "not found in the provided CSV. eventNumbers will be left empty."))
+            # Expression columns must all be numeric
+            if (ncol(data) == 0) stop("The CSV has no expression columns.", call. = FALSE)
+            nonNumeric <- names(data)[!vapply(data, is.numeric, logical(1))]
+            if (length(nonNumeric) > 0) {
+              stop("Non-numeric column(s) in the CSV: ", paste(nonNumeric, collapse = ", "),
+                   ". CytoCrunch expects numeric expression data.", call. = FALSE)
             }
 
             # Extracting parameter and stain names
@@ -120,13 +141,10 @@ setMethod("loadFlowJoCSV",
               if(length(parts) > 1) parts[2] else NA
             })
 
-            # Trim whitespace from column names
-            names(data) <- trimws(names(data))
-
-            # Update object slots
             object@parameterNames <- list(fjParNames = parNames, fjStainNames = stNames)
             object@inputCSV <- list(X = as.matrix(data),
-                                    eventNumbers = as.matrix(eventNumbers, dimnames = list(NULL, "EventNumber")))
+                                    eventNumbers = eventNumbers,
+                                    cellIds = cellIds)
 
             return(object)
           }
@@ -138,16 +156,26 @@ setMethod("loadFlowJoCSV",
 #' @return Returns the CytoCrunch object with the new ClusteringClass object added
 #' @param object A CytoCrunch object
 #' @param runID A unique identifier for this run
-#' @param method The clustering method to use
+#' @param method The clustering method: \code{"FlowSOM"} (needs the
+#'   Bioconductor package FlowSOM) or \code{"SOM"} (a self-organising map from
+#'   EmbedSOM followed by Ward hierarchical clustering of the SOM nodes; needs
+#'   only EmbedSOM, which is on CRAN). The two methods do not give identical
+#'   labels.
 #' @param k The number of clusters to create
+#' @param xdim,ydim Dimensions of the SOM grid (\code{"SOM"} only, default 10)
+#' @param rlen Number of SOM training rounds (\code{"SOM"} only, default 10)
+#' @param seed Optional random seed (\code{"SOM"} only)
 #' @param ... Additional arguments to pass to the method
-#' @examples \dontrun{ performClustering(object, runID = "808", method = "FlowSOM", k = 10)}
+#' @examples
+#' \donttest{
+#' if (requireNamespace("EmbedSOM", quietly = TRUE)) {
+#'   blood <- new("CytoCrunch", sampleName = "Blood3k",
+#'                inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+#'                                               package = "CytoCrunch"))
+#'   blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+#' }
+#' }
 #' @docType methods
-#' @importFrom FlowSOM ReadInput BuildSOM BuildMST metaClustering_consensus
-#' @importFrom dplyr na_if
-#' @importFrom EmbedSOM SOM RandomMap uwotCoords
-#' @importFrom EmbedSOM tSNECoords
-#' @importFrom uwot umap
 #' @export
 setGeneric("performClustering", function(object, runID, method = "FlowSOM", k = NULL, ...) {
   standardGeneric("performClustering")
@@ -155,7 +183,22 @@ setGeneric("performClustering", function(object, runID, method = "FlowSOM", k = 
 #' @rdname performClustering
 setMethod("performClustering",
           "CytoCrunch",
-          function(object, runID = "808", method = "FlowSOM", k = NULL, ...) {
+          function(object, runID = "808", method = "FlowSOM", k = NULL,
+                   xdim = 10, ydim = 10, rlen = 10, seed = NULL, ...) {
+
+            if (identical(method, "Phenograph")) {
+              stop("Clustering method 'Phenograph' is not implemented yet.", call. = FALSE)
+            }
+            if (!method %in% c("FlowSOM", "SOM")) {
+              stop("Unknown clustering method '", method, "'. Supported: 'FlowSOM', 'SOM'.",
+                   call. = FALSE)
+            }
+            if (method == "FlowSOM") {
+              .requireSuggested("FlowSOM", "FlowSOM clustering",
+                                paste0("It is a Bioconductor package: BiocManager::install(\"FlowSOM\"). ",
+                                       "Or use method = \"SOM\", which only needs EmbedSOM."))
+            }
+            if (is.null(k)) stop("'k' (number of clusters) is required.", call. = FALSE)
 
             # Create a new ClusteringClass for this run
             clusteringObj <- new("ClusteringClass")
@@ -180,9 +223,12 @@ setMethod("performClustering",
               # Store the cluster labels for each point
               clusteringObj@result <- list(clusters = clusterLabels)
 
-            } else if (method == "Phenograph") {
-              # TODO: add code here for FastPG or other clustering options
-              clusteringObj@result <- list(clusters = clusters$membership)
+            } else if (method == "SOM") {
+              res <- .clusterSOM(object@inputCSV$X, k = k, xdim = xdim, ydim = ydim,
+                                 rlen = rlen, seed = seed)
+              clusteringObj@result <- list(clusters = res$clusters)
+              clusteringObj@methodSpecificResults <- res[c("codes", "nodeClusters", "mapping",
+                                                           "xdim", "ydim")]
             }
 
             # Add clusteringObj to CytoCrunch object's list of results
@@ -200,6 +246,16 @@ setMethod("performClustering",
 #' @param runID A unique identifier for this run
 #' @param method The dimensionality reduction method to use
 #' @param ... Additional arguments to pass to the method
+#' @param fjSeed Random seed
+#' @param fjXdim,fjYdim Dimensions of the SOM grid (\code{"embedsom"})
+#' @param fjRLEN Number of SOM training rounds (\code{"embedsom"})
+#' @param fjK Number of nearest SOM nodes used by EmbedSOM
+#' @param fjAdjust EmbedSOM \code{adjust} parameter
+#' @param fjSmooth EmbedSOM \code{smooth} parameter
+#' @param fjUmap.Dist UMAP minimum distance (\code{"umap"}, \code{"supervised"})
+#' @param fjMapSize Number of landmark points in the random map
+#' @param supLabel Name of the label column (\code{"supervised"}); 0 means unlabeled
+#' @param fjSuperWeight Weight of the labels (\code{"supervised"})
 #' @examples \dontrun{
 #' performEmbedding(object, runID = "808", method = "umap", fjSeed = 123,fjXdim = 10, fjYdim = 10, fjRLEN = 15, fjK = 25, fjAdjust = 0,fjSmooth = 0, fjUmap.Dist = 0.5, fjMapSize = 5000)
 #' }
@@ -213,10 +269,11 @@ setMethod("performEmbedding",
           "CytoCrunch",
           function(object, runID, method ="umap", fjSeed, fjXdim, fjYdim, fjRLEN, fjK, fjAdjust, fjSmooth,
                    fjUmap.Dist, fjMapSize, supLabel, fjSuperWeight) {
-            # Ensure EmbedSOM is available
-            if (!requireNamespace("EmbedSOM", quietly = TRUE)) {
-              stop("EmbedSOM package is not available")
+            if (identical(method, "uwot")) {
+              stop("Use runUwot() for method 'uwot'; it keeps the model for Apply on Map.",
+                   call. = FALSE)
             }
+            .requireSuggested("EmbedSOM", "EmbedSOM-based embeddings")
 
             # Check if input data exists
             if (is.null(object@inputCSV$X) || nrow(object@inputCSV$X) == 0) {
@@ -244,7 +301,7 @@ setMethod("performEmbedding",
             if (method == "supervised") {
               tempMat <- as.data.frame(object@inputCSV$X)
               clusterMat <- as.matrix(tempMat[supLabel])
-              clusterMat <- dplyr::na_if(clusterMat, 0)
+              clusterMat[clusterMat == 0] <- NA
               clusterMat <- as.factor(clusterMat)
               map <- EmbedSOM::RandomMap(tempMat, min(fjMapSize, nrow(object@inputCSV$X)),
                                          coordsFn = EmbedSOM::uwotCoords(uwotFn = uwot::umap,
@@ -270,9 +327,9 @@ setMethod("performEmbedding",
 #' @param object A CytoCrunch object
 #' @param embeddingRunID The runID of the embedding to plot
 #' @param clusteringRunID The runID of the clustering to overlay
+#' @param ... Currently unused
 #' @examples \dontrun{ plotEmbeddingWithClusters(object, embeddingRunID = "SLK9", clusteringRunID = "SLK8")}
 #' @docType methods
-#' @importFrom ggplot2 ggplot geom_point ggtitle labs scale_color_discrete
 #' @export
 #' @aliases plotEmbeddingWithClusters
 #' @format A ggplot2 object
@@ -280,6 +337,7 @@ setMethod("performEmbedding",
 setGeneric("plotEmbeddingWithClusters", function(object, embeddingRunID, clusteringRunID, ...) {
   standardGeneric("plotEmbeddingWithClusters")
 })
+#' @rdname plotEmbeddingWithClusters
 setMethod("plotEmbeddingWithClusters",
           "CytoCrunch",
           function(object, embeddingRunID, clusteringRunID) {
@@ -321,12 +379,13 @@ setMethod("plotEmbeddingWithClusters",
             plotDF <- data.frame(X = embedding[, 1], Y = embedding[, 2], cluster = factor(clusters))
 
             # Plot using ggplot2
-            library(ggplot2)
-            p <- ggplot(plotDF, aes(x = X, y = Y, color = cluster)) +
-              geom_point(alpha = 0.7) +
-              ggtitle(paste("Embedding (", embeddingRunID, ") with Clusters (", clusteringRunID, ")", sep = "")) +
-              labs(x = "Dim 1", y = "Dim 2") +
-              scale_color_discrete(name = "Cluster")
+            .requireSuggested("ggplot2", "plotting")
+            X <- Y <- cluster <- NULL  # column names used by aes(); silences R CMD check
+            p <- ggplot2::ggplot(plotDF, ggplot2::aes(x = X, y = Y, color = cluster)) +
+              ggplot2::geom_point(alpha = 0.7) +
+              ggplot2::ggtitle(paste("Embedding (", embeddingRunID, ") with Clusters (", clusteringRunID, ")", sep = "")) +
+              ggplot2::labs(x = "Dim 1", y = "Dim 2") +
+              ggplot2::scale_color_discrete(name = "Cluster")
 
             print(p)
           }
@@ -353,7 +412,6 @@ setMethod("plotEmbeddingWithClusters",
 #'                                markers = c("CCR7", "CD45RA"), scale = "none")
 #' }
 #' @docType methods
-#' @importFrom pheatmap pheatmap
 #' @export
 setGeneric("plotClusterHeatmap", function(object, clusteringRunID, markers = NULL, scale = "row", ...) {
   standardGeneric("plotClusterHeatmap")
@@ -362,6 +420,8 @@ setGeneric("plotClusterHeatmap", function(object, clusteringRunID, markers = NUL
 setMethod("plotClusterHeatmap",
           "CytoCrunch",
           function(object, clusteringRunID, markers = NULL, scale = "row", ...) {
+
+            .requireSuggested("pheatmap", "plotting a cluster heatmap")
 
             # Find the clustering corresponding to clusteringRunID
             clusteringObj <- NULL

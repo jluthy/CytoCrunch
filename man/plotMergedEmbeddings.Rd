@@ -2,12 +2,17 @@
 % Please edit documentation in R/CytoCrunchMerged.R
 \name{plotMergedEmbeddings}
 \alias{plotMergedEmbeddings}
+\alias{plotMergedEmbeddings,CytoCrunchMerged-method}
 \title{Plot Merged Embeddings}
 \usage{
 plotMergedEmbeddings(mergedObject, ...)
+
+\S4method{plotMergedEmbeddings}{CytoCrunchMerged}(mergedObject)
 }
 \arguments{
 \item{mergedObject}{A CytoCrunchMerged object containing the merged embeddings}
+
+\item{...}{Currently unused}
 }
 \value{
 A grid of plots showing the merged embeddings
@@ -25,6 +30,9 @@ mergedObject <- new("CytoCrunchMerged",
                   mergedClusters = list(factor(1:5), factor(1:5)),
                   additionalData = list(list(), list())
                   )
-# Plot the merged embeddings
-plotMergedEmbeddings(mergedObject)
+# Plot the merged embeddings (needs ggplot2 and gridExtra)
+if (requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("gridExtra", quietly = TRUE)) {
+  plotMergedEmbeddings(mergedObject)
+}
 }

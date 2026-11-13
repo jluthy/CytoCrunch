@@ -156,10 +156,25 @@ setMethod("loadFlowJoCSV",
 #' @return Returns the CytoCrunch object with the new ClusteringClass object added
 #' @param object A CytoCrunch object
 #' @param runID A unique identifier for this run
-#' @param method The clustering method to use
+#' @param method The clustering method: \code{"FlowSOM"} (needs the
+#'   Bioconductor package FlowSOM) or \code{"SOM"} (a self-organising map from
+#'   EmbedSOM followed by Ward hierarchical clustering of the SOM nodes; needs
+#'   only EmbedSOM, which is on CRAN). The two methods do not give identical
+#'   labels.
 #' @param k The number of clusters to create
+#' @param xdim,ydim Dimensions of the SOM grid (\code{"SOM"} only, default 10)
+#' @param rlen Number of SOM training rounds (\code{"SOM"} only, default 10)
+#' @param seed Optional random seed (\code{"SOM"} only)
 #' @param ... Additional arguments to pass to the method
-#' @examples \dontrun{ performClustering(object, runID = "808", method = "FlowSOM", k = 10)}
+#' @examples
+#' \donttest{
+#' if (requireNamespace("EmbedSOM", quietly = TRUE)) {
+#'   blood <- new("CytoCrunch", sampleName = "Blood3k",
+#'                inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+#'                                               package = "CytoCrunch"))
+#'   blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+#' }
+#' }
 #' @docType methods
 #' @export
 setGeneric("performClustering", function(object, runID, method = "FlowSOM", k = NULL, ...) {
@@ -168,16 +183,22 @@ setGeneric("performClustering", function(object, runID, method = "FlowSOM", k = 
 #' @rdname performClustering
 setMethod("performClustering",
           "CytoCrunch",
-          function(object, runID = "808", method = "FlowSOM", k = NULL, ...) {
+          function(object, runID = "808", method = "FlowSOM", k = NULL,
+                   xdim = 10, ydim = 10, rlen = 10, seed = NULL, ...) {
 
             if (identical(method, "Phenograph")) {
               stop("Clustering method 'Phenograph' is not implemented yet.", call. = FALSE)
             }
-            if (!identical(method, "FlowSOM")) {
-              stop("Unknown clustering method '", method, "'. Supported: 'FlowSOM'.", call. = FALSE)
+            if (!method %in% c("FlowSOM", "SOM")) {
+              stop("Unknown clustering method '", method, "'. Supported: 'FlowSOM', 'SOM'.",
+                   call. = FALSE)
             }
-            .requireSuggested("FlowSOM", "FlowSOM clustering",
-                              "It is a Bioconductor package: BiocManager::install(\"FlowSOM\").")
+            if (method == "FlowSOM") {
+              .requireSuggested("FlowSOM", "FlowSOM clustering",
+                                paste0("It is a Bioconductor package: BiocManager::install(\"FlowSOM\"). ",
+                                       "Or use method = \"SOM\", which only needs EmbedSOM."))
+            }
+            if (is.null(k)) stop("'k' (number of clusters) is required.", call. = FALSE)
 
             # Create a new ClusteringClass for this run
             clusteringObj <- new("ClusteringClass")
@@ -202,6 +223,12 @@ setMethod("performClustering",
               # Store the cluster labels for each point
               clusteringObj@result <- list(clusters = clusterLabels)
 
+            } else if (method == "SOM") {
+              res <- .clusterSOM(object@inputCSV$X, k = k, xdim = xdim, ydim = ydim,
+                                 rlen = rlen, seed = seed)
+              clusteringObj@result <- list(clusters = res$clusters)
+              clusteringObj@methodSpecificResults <- res[c("codes", "nodeClusters", "mapping",
+                                                           "xdim", "ydim")]
             }
 
             # Add clusteringObj to CytoCrunch object's list of results

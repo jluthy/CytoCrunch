@@ -9,6 +9,9 @@
 * `applyEmbeddingModel()` places new data into a saved map ("Apply on Map"),
   matching columns by name and stopping with the list of any missing markers.
 * `getEmbedding()`, `getEmbeddingInfo()` and `getEventIds()` helpers.
+* `performClustering(method = "SOM")`: SOM clustering from EmbedSOM (CRAN) with
+  Ward clustering of the SOM nodes, as an alternative to FlowSOM that needs no
+  Bioconductor package. Labels differ from FlowSOM's.
 
 ## Changes
 * `loadFlowJoCSV()` now removes both `EventNumberDP` (FlowJo) and `CellId`

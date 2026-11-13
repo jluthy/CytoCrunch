@@ -8,18 +8,38 @@
 \usage{
 performClustering(object, runID, method = "FlowSOM", k = NULL, ...)
 
-\S4method{performClustering}{CytoCrunch}(object, runID = "808", method = "FlowSOM", k = NULL, ...)
+\S4method{performClustering}{CytoCrunch}(
+  object,
+  runID = "808",
+  method = "FlowSOM",
+  k = NULL,
+  xdim = 10,
+  ydim = 10,
+  rlen = 10,
+  seed = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{A CytoCrunch object}
 
 \item{runID}{A unique identifier for this run}
 
-\item{method}{The clustering method to use}
+\item{method}{The clustering method: \code{"FlowSOM"} (needs the
+Bioconductor package FlowSOM) or \code{"SOM"} (a self-organising map from
+EmbedSOM followed by Ward hierarchical clustering of the SOM nodes; needs
+only EmbedSOM, which is on CRAN). The two methods do not give identical
+labels.}
 
 \item{k}{The number of clusters to create}
 
 \item{...}{Additional arguments to pass to the method}
+
+\item{xdim, ydim}{Dimensions of the SOM grid (\code{"SOM"} only, default 10)}
+
+\item{rlen}{Number of SOM training rounds (\code{"SOM"} only, default 10)}
+
+\item{seed}{Optional random seed (\code{"SOM"} only)}
 }
 \value{
 Returns the CytoCrunch object with the new ClusteringClass object added
@@ -28,5 +48,12 @@ Returns the CytoCrunch object with the new ClusteringClass object added
 Perform clustering on the data
 }
 \examples{
-\dontrun{ performClustering(object, runID = "808", method = "FlowSOM", k = 10)}
+\donttest{
+if (requireNamespace("EmbedSOM", quietly = TRUE)) {
+  blood <- new("CytoCrunch", sampleName = "Blood3k",
+               inputCSVFilePath = system.file("extdata", "Blood3k.ExtNode.csv",
+                                              package = "CytoCrunch"))
+  blood <- performClustering(blood, runID = "C1", method = "SOM", k = 10, seed = 1)
+}
+}
 }

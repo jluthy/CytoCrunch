@@ -2,12 +2,17 @@
 % Please edit documentation in R/CytoCrunchMerged.R
 \name{getSampleNamesMerged}
 \alias{getSampleNamesMerged}
+\alias{getSampleNamesMerged,CytoCrunchMerged-method}
 \title{Get Sample Names of Merged Objects}
 \usage{
 getSampleNamesMerged(mergedObject, ...)
+
+\S4method{getSampleNamesMerged}{CytoCrunchMerged}(mergedObject)
 }
 \arguments{
 \item{mergedObject}{A CytoCrunchMerged object}
+
+\item{...}{Currently unused}
 }
 \value{
 A character vector of sample names

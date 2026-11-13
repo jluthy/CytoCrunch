@@ -2,11 +2,12 @@ Package: CytoCrunch
 Type: Package
 Title: A Package for Flow Cytometry Data Analysis
 Version: 0.3.0
-Author: Joshua Luthy
-Maintainer: Joshua Luthy <jluthy123@gmail.com>
+Authors@R: person("Joshua", "Luthy", email = "jluthy123@gmail.com",
+    role = c("aut", "cre"))
 Description: A package to handle flow cytometry data from FlowJo, including 
     clustering, dimensionality reduction, and batch correction.
-License: MIT
+License: MIT + file LICENSE
+Additional_repositories: https://bioconductor.org/packages/release/bioc
 Encoding: UTF-8
 LazyData: true
 Imports:

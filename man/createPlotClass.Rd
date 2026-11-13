@@ -6,6 +6,16 @@
 \usage{
 createPlotClass(runID, plotType, plotObject = NULL)
 }
+\arguments{
+\item{runID}{A character string to identify the run}
+
+\item{plotType}{A character string to identify the type of plot}
+
+\item{plotObject}{The plot itself (any type)}
+}
+\value{
+A \code{PlotClass} object
+}
 \description{
-Constructor for PlotClass
+Creates a \code{PlotClass} object.
 }

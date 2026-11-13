@@ -7,4 +7,8 @@
 \description{
 A package to handle flow cytometry data from FlowJo, including clustering, dimensionality reduction, and batch correction.
 }
+\author{
+\strong{Maintainer}: Joshua Luthy \email{jluthy123@gmail.com}
+
+}
 \keyword{internal}

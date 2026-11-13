@@ -6,3 +6,6 @@
 ^skills$
 ^CLAUDE\.md$
 ^\.claude$
+^LICENSE\.md$
+^CytoCrunch\.Rcheck$
+^CytoCrunch_.*\.tar\.gz$

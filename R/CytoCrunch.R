@@ -55,6 +55,11 @@ setClass("CytoCrunch",
 #' @aliases CytoCrunch
 #' @format An object of class \code{CytoCrunch} is a list of slots that store information about the sample, expression data, and results of clustering and dimensionality reduction methods.
 #' Initialize an empty plotList when creating a new CytoCrunch object
+#' @param .Object The new object (supplied by \code{new()})
+#' @param sampleName A name for the sample
+#' @param inputCSVFilePath Path to the CSV exported from FlowJo or SeqGeq
+#' @param ... Passed on to the next \code{initialize} method
+#' @aliases initialize,CytoCrunch-method
 setMethod("initialize", "CytoCrunch",
           function(.Object, sampleName, inputCSVFilePath, ...) {
             # Call the parent class's initialize method to set up slots
@@ -214,6 +219,16 @@ setMethod("performClustering",
 #' @param runID A unique identifier for this run
 #' @param method The dimensionality reduction method to use
 #' @param ... Additional arguments to pass to the method
+#' @param fjSeed Random seed
+#' @param fjXdim,fjYdim Dimensions of the SOM grid (\code{"embedsom"})
+#' @param fjRLEN Number of SOM training rounds (\code{"embedsom"})
+#' @param fjK Number of nearest SOM nodes used by EmbedSOM
+#' @param fjAdjust EmbedSOM \code{adjust} parameter
+#' @param fjSmooth EmbedSOM \code{smooth} parameter
+#' @param fjUmap.Dist UMAP minimum distance (\code{"umap"}, \code{"supervised"})
+#' @param fjMapSize Number of landmark points in the random map
+#' @param supLabel Name of the label column (\code{"supervised"}); 0 means unlabeled
+#' @param fjSuperWeight Weight of the labels (\code{"supervised"})
 #' @examples \dontrun{
 #' performEmbedding(object, runID = "808", method = "umap", fjSeed = 123,fjXdim = 10, fjYdim = 10, fjRLEN = 15, fjK = 25, fjAdjust = 0,fjSmooth = 0, fjUmap.Dist = 0.5, fjMapSize = 5000)
 #' }
@@ -285,6 +300,7 @@ setMethod("performEmbedding",
 #' @param object A CytoCrunch object
 #' @param embeddingRunID The runID of the embedding to plot
 #' @param clusteringRunID The runID of the clustering to overlay
+#' @param ... Currently unused
 #' @examples \dontrun{ plotEmbeddingWithClusters(object, embeddingRunID = "SLK9", clusteringRunID = "SLK8")}
 #' @docType methods
 #' @export
@@ -294,6 +310,7 @@ setMethod("performEmbedding",
 setGeneric("plotEmbeddingWithClusters", function(object, embeddingRunID, clusteringRunID, ...) {
   standardGeneric("plotEmbeddingWithClusters")
 })
+#' @rdname plotEmbeddingWithClusters
 setMethod("plotEmbeddingWithClusters",
           "CytoCrunch",
           function(object, embeddingRunID, clusteringRunID) {

@@ -20,7 +20,13 @@ setClass(
     description = "character" # Optional description or metadata
   )
 )
-#' Constructor for PlotClass
+#' @title Constructor for PlotClass
+#' @description Creates a \code{PlotClass} object.
+#' @param runID A character string to identify the run
+#' @param plotType A character string to identify the type of plot
+#' @param plotObject The plot itself (any type)
+#' @return A \code{PlotClass} object
+#' @export
 createPlotClass <- function(runID, plotType, plotObject = NULL) {
   new("PlotClass", runID = runID, plotType = plotType, plotObject = plotObject)
 }
